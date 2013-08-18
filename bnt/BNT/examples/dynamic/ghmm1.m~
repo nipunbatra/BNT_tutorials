@@ -17,7 +17,7 @@ bnet = mk_dbn(intra, inter, ns, 'discrete', 1, 'observed', 2);
 
 prior0 = normalise(rand(Q,1));
 transmat0 = mk_stochastic(rand(Q,Q));
-mu0 = [0 160];
+mu0 = rand(O,Q);
 Sigma0 = repmat(eye(O), [1 1 Q]);
 bnet.CPD{1} = tabular_CPD(bnet, 1, prior0);
 %% we set the cov prior to 0 to give same results as HMM toolbox

@@ -4,6 +4,7 @@
 %   v     v
 %   Y1    Y2 
 
+clear;
 intra = zeros(2);
 intra(1,2) = 1;
 inter = zeros(2);
@@ -15,8 +16,8 @@ O = 1; % size of observed vector
 ns = [Q O];
 bnet = mk_dbn(intra, inter, ns, 'discrete', 1, 'observed', 2);
 
-prior0 = normalise(rand(Q,1));
-transmat0 = mk_stochastic(rand(Q,Q));
+prior0 = [1 0];
+transmat0 = [0.9 0.1; 0.1 0.9];
 mu0 = [0 160];
 Sigma0 = repmat(eye(O), [1 1 Q]);
 bnet.CPD{1} = tabular_CPD(bnet, 1, prior0);
@@ -25,8 +26,14 @@ bnet.CPD{1} = tabular_CPD(bnet, 1, prior0);
 bnet.CPD{2} = gaussian_CPD(bnet, 2, 'mean', mu0, 'cov', Sigma0);
 bnet.CPD{3} = tabular_CPD(bnet, 3, transmat0);
 
+T=100;
+ev = sample_dbn(bnet, T);
 
-T = 5; % fixed length sequences
+%% Stats regarding the produced distribution
+
+hid=cell2mat(ev(1,:));
+obs=cell2mat(ev(2,:));
+
 
 engine = {};
 engine{end+1} = smoother_engine(jtree_2TBN_inf_engine(bnet));
@@ -62,4 +69,3 @@ assert(approxeq(mu2, CPD{e,2}.mean))
 assert(approxeq(Sigma2, CPD{e,2}.cov))
 assert(approxeq(transmat2, CPD{e,3}.CPT))
 assert(approxeq(LL2, LL{e}))
-
