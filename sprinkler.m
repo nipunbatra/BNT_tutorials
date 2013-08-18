@@ -1,5 +1,9 @@
 %% Introduces the rain-sprinkler example
 
+% Setting up the path
+cd ~/git/bnt_tutorial/
+addpath(genpath(pwd))
+
 % Creating the adjacency matrix
 N = 4; 
 dag = zeros(N,N);
@@ -78,12 +82,30 @@ evidence{R}=1;
 marg = marginal_nodes(engine, S);
 evidence_grass_wet_no_rain = marg.T(2);
 
+%%% ----------------------------------------------------------------------------------
+%%% CASE IV: Find the probability that the sprinker was on given that the
+%%% grass is wet and it did rain
+%%%
+%%%-----------------------------------------------------------------------------------
+engine = jtree_inf_engine(bnet);
+evidence=cell(1,N);
+evidence{W}=2;
+evidence{R}=2;
+[engine, loglik] = enter_evidence(engine, evidence);
+marg = marginal_nodes(engine, S);
+evidence_grass_wet_rain = marg.T(2);
+
 h=figure;
-cases={'No evidence','G=dry','G=wet','G=wet, R=false'};
-set(0,'DefaultAxesFontSize',30)
-bar([1:4],[no_evidence,evidence_grass_not_wet,evidence_grass_wet,evidence_grass_wet_no_rain]);
+cases={'No evidence','G=dry','G=wet','G=wet, R=false','G=wet, R=true'};
+set(0,'DefaultAxesFontSize',20)
+bar([1:5],[no_evidence,evidence_grass_not_wet,evidence_grass_wet,evidence_grass_wet_no_rain,evidence_grass_wet_rain]);
 set(gca,'XtickL',cases);
 title('P(Sprinkler=On|Evidence)');
 xlabel('Evidence');
 ylabel('P(Sprinkler=On)');
+set(h, 'PaperUnits', 'inches');
+set(h, 'PaperSize', [12 10]);
+
+%%Saving the figure
+%saveas(h,'sprinkler_evidence','jpg');
 
