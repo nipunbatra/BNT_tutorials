@@ -3,20 +3,26 @@
 %   |     | 
 %   v     v
 %   Y1    Y2 
+%% Setting up the path
+cd ~/git/bnt_tutorial/
+addpath(genpath(pwd))
 
+%% Setting a seed for repeatibility
+s = RandStream('mcg16807','Seed',0);
+RandStream.setGlobalStream(s);
 clear;
 intra = zeros(2);
 intra(1,2) = 1;
 inter = zeros(2);
 inter(1,1) = 1;
-n = 2;
+n = 3;
 
 Q = 2; % num hidden states
 O = 1; % size of observed vector
 ns = [Q O];
 bnet = mk_dbn(intra, inter, ns, 'discrete', 1, 'observed', 2);
 
-prior0 = [1 0];
+prior0 = [0.8 0.2];
 transmat0 = [0.9 0.1; 0.1 0.9];
 mu0 = [0 160];
 Sigma0 = repmat(eye(O), [1 1 Q]);
@@ -26,7 +32,7 @@ bnet.CPD{1} = tabular_CPD(bnet, 1, prior0);
 bnet.CPD{2} = gaussian_CPD(bnet, 2, 'mean', mu0, 'cov', Sigma0);
 bnet.CPD{3} = tabular_CPD(bnet, 3, transmat0);
 
-T=100;
+T=1000;
 ev = sample_dbn(bnet, T);
 
 %% Stats regarding the produced distribution
@@ -69,3 +75,7 @@ assert(approxeq(mu2, CPD{e,2}.mean))
 assert(approxeq(Sigma2, CPD{e,2}.cov))
 assert(approxeq(transmat2, CPD{e,3}.CPT))
 assert(approxeq(LL2, LL{e}))
+subplot(211)
+ plot(cell2mat(ev(1,:)));figure(gcf);
+subplot(212)
+plot(cell2mat(ev(2,:)));figure(gcf);

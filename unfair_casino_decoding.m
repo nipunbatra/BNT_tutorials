@@ -8,6 +8,10 @@ clear;
 s = RandStream('mcg16807','Seed',0);
 RandStream.setGlobalStream(s);
 
+%Now using the parameters which we had learnt before
+learnt_transmat=[0.74,0.26;0.3,0.7];
+learnt_prior=[0.11;0.89];
+learnt_obsmat=[0.178052578451625,0.173883549445059,0.163420227386818,0.190515178728016,0.169639153430181,0.124489312558300;0.107532640659765,0.104160605453397,0.0977215094092837,0.106901812648972,0.0991482097246066,0.484535222103976];
 
 %% Creating the DBN node structure
 intra = zeros(2);
@@ -36,44 +40,35 @@ bnet = mk_dbn(intra, inter, ns, 'discrete', dnodes,'observed',onodes, 'eclass1',
 
 %% We define the HMM parameters as follows
 % Ordering is as follows: Fair, Unfair
-% Pi= [2/3,1/3]
-% A= [[0.95,0.05],[0.1,0.9]]
-% B= [[1/6,1/6....1/6],[1/5,1/5,1/5,1/5,1/5,1/2]]
-prior0 = [.5;.5];
-transmat0 = [[0.7,0.3];[0.3,0.7]];
-obsmat0 = [1/6*ones(1,6);[1/10,1/10,1/10,1/10,1/10,1/2]];
 
-% prior0 = normalise(rand(Q,1));
-% transmat0 = mk_stochastic(rand(Q,Q));
-% obsmat0 = mk_stochastic(rand(Q,O));
-
-bnet.CPD{1} = tabular_CPD(bnet, 1, prior0);
-bnet.CPD{2} = tabular_CPD(bnet, 2, obsmat0);
-bnet.CPD{3} = tabular_CPD(bnet, 3, transmat0);
+bnet.CPD{1} = tabular_CPD(bnet, 1, learnt_prior);
+bnet.CPD{2} = tabular_CPD(bnet, 2, learnt_obsmat);
+bnet.CPD{3} = tabular_CPD(bnet, 3, learnt_transmat);
 
 T = 1000;
-% engine = smoother_engine(hmm_2TBN_inf_engine(bnet));
-engine = smoother_engine(jtree_2TBN_inf_engine(bnet));
-ncases=5;
+ncases=;
 cases = cell(1, ncases);
 ss=2;
 max_iter=10;
-for i=1:ncases
+for i=6:6+ncases
   cases{i} = cell(ss,T);
   filename=sprintf('data/observed_%d.csv',i);
-  temp=csvread(filename);
-  cases{i}(onodes,:) = num2cell(temp);
+  filename_hidden=sprintf('data/hidden_%d.csv',i);
+  data=csvread(filename);
+  ground_truth=csvread(filename_hidden);
 end
-[bnet2, LL] = learn_params_dbn_em(engine, cases, 'max_iter', max_iter);
+obslik = multinomial_prob(data, learnt_obsmat);
+path = viterbi_path(learnt_prior, learnt_transmat, obslik);
 
-% Learnt parameters 
-learnt_=struct(bnet2.CPD{1});
-learnt_prior=learnt_.CPT;
-learnt_=struct(bnet2.CPD{3});
-learnt_transmat=learnt_.CPT;
-learnt_=struct(bnet2.CPD{2});
-learnt_obsmat=learnt_.CPT;
+%% Plotting the results
+subplot(211)
+plot(path)
+ylim([0.8 2.2])
+title('Ground Truth');
+subplot(212)
+plot(ground_truth)
+ylim([0.8 2.2])
+title('Predicted using Viterbi algorithm');
 
-disp(learnt_prior)
-
-  
+%%Computing statistics regarding the prediction
+accuracy=sum(path==ground_truth)/length(path);

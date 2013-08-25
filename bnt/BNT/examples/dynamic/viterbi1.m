@@ -7,7 +7,7 @@ inter(1,1) = 1;
 n = 2;
 
 Q = 2; % num hidden states
-O = 2; % num observable symbols
+O = 3; % num observable symbols
 
 ns = [Q O];
 dnodes = 1:2;
@@ -28,7 +28,7 @@ bnet.CPD{3} = tabular_CPD(bnet, 3, transmat);
 
 
 % Create a sequence
-T = 5; 
+T = 30; 
 ev = sample_dbn(bnet, T);
 evidence = cell(2,T);
 evidence(2,:) = ev(2,:); % extract observed component
